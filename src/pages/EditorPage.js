@@ -21,13 +21,14 @@ const EditorPage = () => {
             function handleErrors(e){
                 console.log('Socket Error', e);
                 toast.error('Socket connection failed, try again later')
-                reactNavigator('/');
+                // reactNavigator('/');
             }
             socketRef.current.emit(ACTIONS.JOIN, {
-                roomId,
+                // roomId,
                 username: location.state?.username,
             });
         };
+        init();
     }, []);
 
     const [clients, setClients] = useState([
