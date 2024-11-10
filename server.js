@@ -1,13 +1,13 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-
+const express = require('express');
 const app = express();
+const http = require('http');
+const { Server } = require('socket.io');
+
 
 const server = http.createServer(app);
 const io = new Server(server);
 
-io.on("connection", (socket) => {
+io.on('connection', (socket) => {
     console.log("Server connected ", socket.id);
 });
 
