@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import Dracula from "monaco-themes/themes/Dracula.json";
 import GitHub from "monaco-themes/themes/GitHub Dark.json";
 import Nord from "monaco-themes/themes/Nord.json";
 import NightOwl from "monaco-themes/themes/Night Owl.json";
+import { initSocket } from "../socket";
+import ACTIONS from "../Actions";
 
 const languages = [
     { label: "C++", value: "cpp" },
@@ -22,15 +24,46 @@ const themes = [
     { label: "Light", value: "vs" },
     { label: "Dark", value: "vs-dark" },
     { label: "High Contrast", value: "hc-black" },
-    { label: "GitHub", value:"Git-hub" },
-    { label: "Nord", value:"Nord" },
-    { label: "Night Owl", value:"NightOwl" },
-    // Add custom themes if defined
+    { label: "GitHub", value: "Git-hub" },
+    { label: "Nord", value: "Nord" },
+    { label: "Night Owl", value: "NightOwl" },
 ];
 
-export const Editors = () => {
+export const Editors = ({ roomId, username }) => {
     const [language, setLanguage] = useState("C++");
     const [theme, setTheme] = useState("Dracula");
+    const [code, setCode] = useState("// Your word here");
+    const [socket, setSocket] = useState(null);
+
+    useEffect(() => {
+        const init = async () => {
+            const socketInstance = await initSocket();
+            setSocket(socketInstance);
+
+            socketInstance.on("connect", () => {
+                console.log(
+                    "Connected to the server with ID:",
+                    socketInstance.id
+                );
+                socketInstance.emit(ACTIONS.JOIN, {
+                    roomId,
+                    username: username,
+                });
+            });
+
+            // Listen for code change events from other clients
+            socketInstance.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+                setCode(code);
+            });
+
+            // Cleanup on component unmount
+            return () => {
+                socketInstance.disconnect();
+            };
+        };
+
+        init();
+    }, [roomId]);
 
     const handleLanguageChange = (event) => {
         setLanguage(event.target.value);
@@ -47,6 +80,13 @@ export const Editors = () => {
         monaco.editor.defineTheme("NightOwl", NightOwl);
     };
 
+    const handleEditorChange = (value) => {
+        setCode(value);
+        // Emit the code change event to the server
+        if (socket) {
+            socket.emit(ACTIONS.CODE_CHANGE, { roomId, code: value });
+        }
+    };
     return (
         <>
             <div className="dropdown-section">
@@ -91,10 +131,10 @@ export const Editors = () => {
             </div>
             <Editor
                 height="95vh"
-                defaultLanguage={language}
-                defaultValue="// Your code here"
+                language={language}
+                value={code}
                 beforeMount={handleEditorWillMount}
-                // onMount={handleEditorDidMount}
+                onChange={handleEditorChange}
                 theme={theme}
                 options={{
                     fontSize: 18,
