@@ -16,6 +16,7 @@ const ACTIONS = require("../Actions");
 const EditorPage = () => {
     const { roomId } = useParams();
     const socketRef = useRef(null);
+    const codeRef = useRef(null);
     const location = useLocation();
     const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
@@ -45,6 +46,11 @@ const EditorPage = () => {
                         console.log(`${username} joined the room`);
                     }
                     setClients(clients);
+
+                    socketRef.current.emit(ACTIONS.SYNC_CODE, {
+                        code: codeRef.current,
+                        socketId,
+                    });
                 }
             );
 
@@ -68,7 +74,22 @@ const EditorPage = () => {
             socketRef.current.off(ACTIONS.JOINED);
             socketRef.current.off(ACTIONS.DISCONNECTED);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    async function handleCopyButton() {
+        try {
+            await navigator.clipboard.writeText(roomId);
+            toast.success("Room ID Copied");
+        } catch (err) {
+            toast.error("Could not copy Room ID");
+            console.log(err);
+        }
+    }
+
+    function handleLeaveRoom() {
+        reactNavigator("/");
+    }
 
     if (!location.state) {
         return <Navigate to="/" />;
@@ -100,14 +121,25 @@ const EditorPage = () => {
                         ))}
                     </div>
                 </div>
-                <button className="btn cpyBtn">
-                    ROOM ID &nbsp;
-                    <FontAwesomeIcon icon={faCopy} />
-                </button>
-                <button className="btn leaveBtn">Leave</button>
+                <div className="div-button">
+                    <button className="btn cpyBtn" onClick={handleCopyButton}>
+                        ROOM ID &nbsp;
+                        <FontAwesomeIcon icon={faCopy} />
+                    </button>
+                    <button className="btn leaveBtn" onClick={handleLeaveRoom}>
+                        Leave
+                    </button>
+                </div>
             </div>
             <div className="editorWrap">
-                <Editors roomId={roomId} username={location.state?.username} />
+                <Editors
+                    roomId={roomId}
+                    username={location.state?.username}
+                    socket={socketRef.current}
+                    onCodeChange={(code) => {
+                        codeRef.current = code;
+                    }}
+                />
             </div>
         </div>
     );

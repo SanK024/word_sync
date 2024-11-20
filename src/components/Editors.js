@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import Dracula from "monaco-themes/themes/Dracula.json";
 import GitHub from "monaco-themes/themes/GitHub Dark.json";
 import Nord from "monaco-themes/themes/Nord.json";
 import NightOwl from "monaco-themes/themes/Night Owl.json";
-import { initSocket } from "../socket";
 import ACTIONS from "../Actions";
 
 const languages = [
@@ -29,48 +28,34 @@ const themes = [
     { label: "Night Owl", value: "NightOwl" },
 ];
 
-export const Editors = ({ roomId, username }) => {
+export const Editors = ({ roomId, username, socket , onCodeChange}) => {
     const [language, setLanguage] = useState("C++");
     const [theme, setTheme] = useState("Dracula");
     const [code, setCode] = useState("// Your word here");
-    const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        const init = async () => {
-            const socketInstance = await initSocket();
-            setSocket(socketInstance);
+        onCodeChange(code);
+        if (!socket) return;
 
-            socketInstance.on("connect", () => {
-                console.log(
-                    "Connected to the server with ID:",
-                    socketInstance.id
-                );
-                socketInstance.emit(ACTIONS.JOIN, {
-                    roomId,
-                    username: username,
-                });
-            });
+        socket.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+            setCode(code);
+        });
 
-            // Listen for code change events from other clients
-            socketInstance.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-                setCode(code);
-            });
-
-            // Cleanup on component unmount
-            return () => {
-                socketInstance.disconnect();
-            };
+        return () => {
+            socket.off(ACTIONS.CODE_CHANGE); 
         };
-
-        init();
-    }, [roomId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket]);
 
     const handleLanguageChange = (event) => {
-        setLanguage(event.target.value);
+        const newLang = event.target.value;
+        setLanguage(newLang);
+
     };
 
     const handleThemeChange = (event) => {
-        setTheme(event.target.value);
+        const newTheme = event.target.value;
+        setTheme(newTheme);
     };
 
     const handleEditorWillMount = (monaco) => {
@@ -82,7 +67,7 @@ export const Editors = ({ roomId, username }) => {
 
     const handleEditorChange = (value) => {
         setCode(value);
-        // Emit the code change event to the server
+        onCodeChange(value);
         if (socket) {
             socket.emit(ACTIONS.CODE_CHANGE, { roomId, code: value });
         }

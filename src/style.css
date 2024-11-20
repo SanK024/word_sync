@@ -127,13 +127,19 @@ footer a {
     padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    align-items: center;
     border-right: 1px solid black;
 }
 
 .asideInner {
     flex: 1;
+}
+
+.div-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 10px;
 }
 
 .logo {
