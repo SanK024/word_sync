@@ -28,7 +28,7 @@ const themes = [
     { label: "Night Owl", value: "NightOwl" },
 ];
 
-export const Editors = ({ roomId, username, socket , onCodeChange}) => {
+export const Editors = ({ roomId, username, socket, onCodeChange }) => {
     const [language, setLanguage] = useState("C++");
     const [theme, setTheme] = useState("Dracula");
     const [code, setCode] = useState("// Your word here");
@@ -41,8 +41,13 @@ export const Editors = ({ roomId, username, socket , onCodeChange}) => {
             setCode(code);
         });
 
+        socket.on(ACTIONS.LANGUAGE_CHANGE, ({ newLang }) => {
+            setLanguage(newLang);
+        });
+
         return () => {
-            socket.off(ACTIONS.CODE_CHANGE); 
+            socket.off(ACTIONS.CODE_CHANGE);
+            socket.off(ACTIONS.LANGUAGE_CHANGE);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [socket]);
@@ -51,6 +56,7 @@ export const Editors = ({ roomId, username, socket , onCodeChange}) => {
         const newLang = event.target.value;
         setLanguage(newLang);
 
+        socket.emit(ACTIONS.LANGUAGE_CHANGE, { roomId, newLang });
     };
 
     const handleThemeChange = (event) => {

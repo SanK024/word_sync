@@ -44,6 +44,10 @@ io.on("connection", (socket) => {
         socket.to(socketId).emit(ACTIONS.CODE_CHANGE, { code });
     });
 
+    socket.on(ACTIONS.LANGUAGE_CHANGE, ({ roomId, newLang }) => {
+        socket.in(roomId).emit(ACTIONS.LANGUAGE_CHANGE, { newLang });
+    });
+
     socket.on("disconnecting", () => {
         const rooms = [...socket.rooms];
         rooms.forEach((roomId) => {
