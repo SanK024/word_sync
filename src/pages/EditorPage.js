@@ -54,7 +54,7 @@ const EditorPage = () => {
                 }
             );
 
-            //Lisstening for disconnected
+            //Listening for disconnected
             socketRef.current.on(
                 ACTIONS.DISCONNECTED,
                 ({ socketId, username }) => {
